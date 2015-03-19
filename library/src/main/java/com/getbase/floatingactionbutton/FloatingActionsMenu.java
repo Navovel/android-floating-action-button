@@ -4,10 +4,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.ColorRes;
@@ -32,8 +29,6 @@ public class FloatingActionsMenu extends ViewGroup {
     public static final int LABELS_ON_RIGHT_SIDE = 1;
 
     private static final int ANIMATION_DURATION = 300;
-    private static final float COLLAPSED_PLUS_ROTATION = 0f;
-    private static final float EXPANDED_PLUS_ROTATION = 90f + 45f;
 
     private static Interpolator sExpandInterpolator = new OvershootInterpolator();
     private static Interpolator sCollapseInterpolator = new DecelerateInterpolator(3f);
@@ -52,11 +47,10 @@ public class FloatingActionsMenu extends ViewGroup {
 
     private boolean mExpanded;
 
-    private AddFloatingActionButton mAddButton;
+    private FloatingActionButton mMainButton;
 
     private AnimatorSet mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
     private AnimatorSet mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
-    private RotatingDrawable mRotatingDrawable;
     private int mMaxButtonWidth;
     private int mMaxButtonHeight;
     private int mLabelsStyle;
@@ -91,7 +85,7 @@ public class FloatingActionsMenu extends ViewGroup {
     protected void onFinishInflate() {
         super.onFinishInflate();
 
-        bringChildToFront(mAddButton);
+        bringChildToFront(mMainButton);
         mButtonsCount = getChildCount();
 
         if (mLabelsStyle != 0) {
@@ -170,14 +164,14 @@ public class FloatingActionsMenu extends ViewGroup {
                     mTouchDelegateGroup.clearTouchDelegates();
                 }
 
-                int addButtonY = expandUp ? b - t - mAddButton.getMeasuredHeight() : 0;
+                int addButtonY = expandUp ? b - t - mMainButton.getMeasuredHeight() : 0;
                 // Ensure mAddButton is centered on the line where the buttons should be
                 int buttonsHorizontalCenter = mLabelsPosition == LABELS_ON_LEFT_SIDE
                         ? r - l - mMaxButtonWidth / 2
                         : mMaxButtonWidth / 2;
-                int addButtonLeft = buttonsHorizontalCenter - mAddButton.getMeasuredWidth() / 2;
-                mAddButton.layout(addButtonLeft, addButtonY, addButtonLeft + mAddButton.getMeasuredWidth(),
-                        addButtonY + mAddButton.getMeasuredHeight());
+                int addButtonLeft = buttonsHorizontalCenter - mMainButton.getMeasuredWidth() / 2;
+                mMainButton.layout(addButtonLeft, addButtonY, addButtonLeft + mMainButton.getMeasuredWidth(),
+                        addButtonY + mMainButton.getMeasuredHeight());
 
                 int labelsOffset = mMaxButtonWidth / 2 + mLabelsMargin;
                 int labelsXNearButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
@@ -186,12 +180,12 @@ public class FloatingActionsMenu extends ViewGroup {
 
                 int nextY = expandUp ?
                         addButtonY - mButtonSpacing :
-                        addButtonY + mAddButton.getMeasuredHeight() + mButtonSpacing;
+                        addButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing;
 
                 for (int i = mButtonsCount - 1; i >= 0; i--) {
                     final View child = getChildAt(i);
 
-                    if (child == mAddButton || child.getVisibility() == GONE) continue;
+                    if (child == mMainButton || child.getVisibility() == GONE) continue;
 
                     int childX = buttonsHorizontalCenter - child.getMeasuredWidth() / 2;
                     int childY = expandUp ? nextY - child.getMeasuredHeight() : nextY;
@@ -253,23 +247,23 @@ public class FloatingActionsMenu extends ViewGroup {
             case EXPAND_RIGHT:
                 boolean expandLeft = mExpandDirection == EXPAND_LEFT;
 
-                int addButtonX = expandLeft ? r - l - mAddButton.getMeasuredWidth() : 0;
+                int addButtonX = expandLeft ? r - l - mMainButton.getMeasuredWidth() : 0;
                 // Ensure mAddButton is centered on the line where the buttons should be
-                int addButtonTop = b - t - mMaxButtonHeight + (mMaxButtonHeight - mAddButton.getMeasuredHeight()) / 2;
-                mAddButton.layout(addButtonX, addButtonTop, addButtonX + mAddButton.getMeasuredWidth(),
-                        addButtonTop + mAddButton.getMeasuredHeight());
+                int addButtonTop = b - t - mMaxButtonHeight + (mMaxButtonHeight - mMainButton.getMeasuredHeight()) / 2;
+                mMainButton.layout(addButtonX, addButtonTop, addButtonX + mMainButton.getMeasuredWidth(),
+                        addButtonTop + mMainButton.getMeasuredHeight());
 
                 int nextX = expandLeft ?
                         addButtonX - mButtonSpacing :
-                        addButtonX + mAddButton.getMeasuredWidth() + mButtonSpacing;
+                        addButtonX + mMainButton.getMeasuredWidth() + mButtonSpacing;
 
                 for (int i = mButtonsCount - 1; i >= 0; i--) {
                     final View child = getChildAt(i);
 
-                    if (child == mAddButton || child.getVisibility() == GONE) continue;
+                    if (child == mMainButton || child.getVisibility() == GONE) continue;
 
                     int childX = expandLeft ? nextX - child.getMeasuredWidth() : nextX;
-                    int childY = addButtonTop + (mAddButton.getMeasuredHeight() - child.getMeasuredHeight()) / 2;
+                    int childY = addButtonTop + (mMainButton.getMeasuredHeight() - child.getMeasuredHeight()) / 2;
                     child.layout(childX, childY, childX + child.getMeasuredWidth(), childY + child.getMeasuredHeight());
 
                     float collapsedTranslation = addButtonX - childX;
@@ -331,11 +325,6 @@ public class FloatingActionsMenu extends ViewGroup {
             SavedState savedState = (SavedState) state;
             mExpanded = savedState.mExpanded;
             mTouchDelegateGroup.setEnabled(mExpanded);
-
-            if (mRotatingDrawable != null) {
-                mRotatingDrawable.setRotation(mExpanded ? EXPANDED_PLUS_ROTATION : COLLAPSED_PLUS_ROTATION);
-            }
-
             super.onRestoreInstanceState(savedState.getSuperState());
         } else {
             super.onRestoreInstanceState(state);
@@ -424,25 +413,25 @@ public class FloatingActionsMenu extends ViewGroup {
             throw new IllegalStateException("Action labels in horizontal expand orientation is not supported.");
         }
 
-        createAddButton(context);
+        createMainButtonButton(context);
     }
 
     private boolean expandsHorizontally() {
         return mExpandDirection == EXPAND_LEFT || mExpandDirection == EXPAND_RIGHT;
     }
 
-    private void createAddButton(Context context) {
-        mAddButton = new MyAddFloatingActionButton(context);
-        mAddButton.setId(R.id.fab_expand_menu_button);
-        mAddButton.setSize(mAddButtonSize);
-        mAddButton.setOnClickListener(new OnClickListener() {
+    private void createMainButtonButton(Context context) {
+        mMainButton = new FloatingActionButton(context);
+        mMainButton.setId(R.id.fab_expand_menu_button);
+        mMainButton.setSize(mAddButtonSize);
+        mMainButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 toggle();
             }
         });
 
-        addView(mAddButton, super.generateDefaultLayoutParams());
+        addView(mMainButton, super.generateDefaultLayoutParams());
     }
 
     private int getColor(@ColorRes int id) {
@@ -461,7 +450,7 @@ public class FloatingActionsMenu extends ViewGroup {
             FloatingActionButton button = (FloatingActionButton) getChildAt(i);
             String title = button.getTitle();
 
-            if (button == mAddButton || title == null ||
+            if (button == mMainButton || title == null ||
                     button.getTag(R.id.fab_label) != null) continue;
 
             TextView label = new TextView(context);
@@ -555,79 +544,6 @@ public class FloatingActionsMenu extends ViewGroup {
                 mExpandAnimation.play(mExpandDir);
                 animationsSetToPlay = true;
             }
-        }
-    }
-
-    private class MyAddFloatingActionButton extends AddFloatingActionButton {
-
-        public MyAddFloatingActionButton(Context context) {
-            super(context);
-        }
-
-        public MyAddFloatingActionButton(Context context, AttributeSet attrs) {
-            super(context, attrs);
-        }
-
-        public MyAddFloatingActionButton(Context context, AttributeSet attrs, int defStyle) {
-            super(context, attrs, defStyle);
-        }
-
-        @Override
-        protected void updateBackground() {
-            mPlusColor = mAddButtonPlusColor;
-            mColorNormal = mAddButtonColorNormal;
-            mColorPressed = mAddButtonColorPressed;
-            mStrokeVisible = mAddButtonStrokeVisible;
-            super.updateBackground();
-        }
-
-        @Override
-        Drawable getIconDrawable() {
-            final RotatingDrawable rotatingDrawable = new RotatingDrawable(super.getIconDrawable());
-            mRotatingDrawable = rotatingDrawable;
-
-            final OvershootInterpolator interpolator = new OvershootInterpolator();
-
-            final ObjectAnimator collapseAnimator = ObjectAnimator.ofFloat(rotatingDrawable, "rotation",
-                    EXPANDED_PLUS_ROTATION, COLLAPSED_PLUS_ROTATION);
-            final ObjectAnimator expandAnimator = ObjectAnimator.ofFloat(rotatingDrawable, "rotation",
-                    COLLAPSED_PLUS_ROTATION, EXPANDED_PLUS_ROTATION);
-
-            collapseAnimator.setInterpolator(interpolator);
-            expandAnimator.setInterpolator(interpolator);
-
-            mExpandAnimation.play(expandAnimator);
-            mCollapseAnimation.play(collapseAnimator);
-
-            return rotatingDrawable;
-        }
-    }
-
-    private static class RotatingDrawable extends LayerDrawable {
-
-        public RotatingDrawable(Drawable drawable) {
-            super(new Drawable[]{drawable});
-        }
-
-        private float mRotation;
-
-        @SuppressWarnings("UnusedDeclaration")
-        public float getRotation() {
-            return mRotation;
-        }
-
-        @SuppressWarnings("UnusedDeclaration")
-        public void setRotation(float rotation) {
-            mRotation = rotation;
-            invalidateSelf();
-        }
-
-        @Override
-        public void draw(Canvas canvas) {
-            canvas.save();
-            canvas.rotate(mRotation, getBounds().centerX(), getBounds().centerY());
-            super.draw(canvas);
-            canvas.restore();
         }
     }
 }
