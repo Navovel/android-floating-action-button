@@ -32,17 +32,18 @@ public class FloatingActionButton extends ImageButton {
     int mColorNormal;
     int mColorPressed;
     int mColorDisabled;
-    String mTitle;
+    boolean mStrokeVisible;
+
     @DrawableRes
     private int mIcon;
     private Drawable mIconDrawable;
-    private int mSize;
 
+    private String mTitle;
+    private int mSize;
     private float mCircleSize;
     private float mShadowRadius;
     private float mShadowOffset;
     private int mDrawableSize;
-    boolean mStrokeVisible;
 
     public FloatingActionButton(Context context) {
         this(context, null);
@@ -58,31 +59,19 @@ public class FloatingActionButton extends ImageButton {
         init(context, attrs);
     }
 
-    void init(Context context, AttributeSet attributeSet) {
-        TypedArray attr = context.obtainStyledAttributes(attributeSet, R.styleable.FloatingActionButton, 0, 0);
-        mColorNormal = attr.getColor(R.styleable.FloatingActionButton_fab_colorNormal, getColor(android.R.color.holo_blue_dark));
-        mColorPressed = attr.getColor(R.styleable.FloatingActionButton_fab_colorPressed, getColor(android.R.color.holo_blue_light));
-        mColorDisabled = attr.getColor(R.styleable.FloatingActionButton_fab_colorDisabled, getColor(android.R.color.darker_gray));
-        mSize = attr.getInt(R.styleable.FloatingActionButton_fab_size, SIZE_NORMAL);
-        mIcon = attr.getResourceId(R.styleable.FloatingActionButton_fab_icon, 0);
-        mTitle = attr.getString(R.styleable.FloatingActionButton_fab_title);
-        mStrokeVisible = attr.getBoolean(R.styleable.FloatingActionButton_fab_stroke_visible, true);
-        attr.recycle();
-
-        updateCircleSize();
-        mShadowRadius = getDimension(R.dimen.fab_shadow_radius);
-        mShadowOffset = getDimension(R.dimen.fab_shadow_offset);
-        updateDrawableSize();
-
-        updateBackground();
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        setMeasuredDimension(mDrawableSize, mDrawableSize);
     }
 
-    private void updateDrawableSize() {
-        mDrawableSize = (int) (mCircleSize + 2 * mShadowRadius);
-    }
-
-    private void updateCircleSize() {
-        mCircleSize = getDimension(mSize == SIZE_NORMAL ? R.dimen.fab_size_normal : R.dimen.fab_size_mini);
+    @Override
+    public void setVisibility(int visibility) {
+        TextView label = getLabelView();
+        if (label != null) {
+            label.setVisibility(visibility);
+        }
+        super.setVisibility(visibility);
     }
 
     public void setSize(@FAB_SIZE int size) {
@@ -184,14 +173,6 @@ public class FloatingActionButton extends ImageButton {
         return mStrokeVisible;
     }
 
-    int getColor(@ColorRes int id) {
-        return getResources().getColor(id);
-    }
-
-    float getDimension(@DimenRes int id) {
-        return getResources().getDimension(id);
-    }
-
     public void setTitle(String title) {
         mTitle = title;
         TextView label = getLabelView();
@@ -200,21 +181,29 @@ public class FloatingActionButton extends ImageButton {
         }
     }
 
-    TextView getLabelView() {
-        return (TextView) getTag(R.id.fab_label);
-    }
-
     public String getTitle() {
         return mTitle;
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        setMeasuredDimension(mDrawableSize, mDrawableSize);
+    protected void init(Context context, AttributeSet attributeSet) {
+        TypedArray attr = context.obtainStyledAttributes(attributeSet, R.styleable.FloatingActionButton, 0, 0);
+        mColorNormal = attr.getColor(R.styleable.FloatingActionButton_fab_colorNormal, getColor(android.R.color.holo_blue_dark));
+        mColorPressed = attr.getColor(R.styleable.FloatingActionButton_fab_colorPressed, getColor(android.R.color.holo_blue_light));
+        mColorDisabled = attr.getColor(R.styleable.FloatingActionButton_fab_colorDisabled, getColor(android.R.color.darker_gray));
+        mSize = attr.getInt(R.styleable.FloatingActionButton_fab_size, SIZE_NORMAL);
+        mIcon = attr.getResourceId(R.styleable.FloatingActionButton_fab_icon, 0);
+        mTitle = attr.getString(R.styleable.FloatingActionButton_fab_title);
+        mStrokeVisible = attr.getBoolean(R.styleable.FloatingActionButton_fab_stroke_visible, true);
+        attr.recycle();
+
+        mShadowRadius = getDimension(R.dimen.fab_shadow_radius);
+        mShadowOffset = getDimension(R.dimen.fab_shadow_offset);
+        updateCircleSize();
+        updateDrawableSize();
+        updateBackground();
     }
 
-    void updateBackground() {
+    protected void updateBackground() {
         final float strokeWidth = getDimension(R.dimen.fab_stroke_width);
         final float halfStrokeWidth = strokeWidth / 2f;
 
@@ -263,6 +252,26 @@ public class FloatingActionButton extends ImageButton {
         }
     }
 
+    TextView getLabelView() {
+        return (TextView) getTag(R.id.fab_label);
+    }
+
+    int getColor(@ColorRes int id) {
+        return getResources().getColor(id);
+    }
+
+    float getDimension(@DimenRes int id) {
+        return getResources().getDimension(id);
+    }
+
+    private void updateCircleSize() {
+        mCircleSize = getDimension(mSize == SIZE_NORMAL ? R.dimen.fab_size_normal : R.dimen.fab_size_mini);
+    }
+
+    private void updateDrawableSize() {
+        mDrawableSize = (int) (mCircleSize + 2 * mShadowRadius);
+    }
+
     private StateListDrawable createFillDrawable(float strokeWidth) {
         StateListDrawable drawable = new StateListDrawable();
         drawable.addState(new int[]{-android.R.attr.state_enabled}, createCircleDrawable(mColorDisabled, strokeWidth));
@@ -296,23 +305,6 @@ public class FloatingActionButton extends ImageButton {
         return drawable;
     }
 
-    private static class TranslucentLayerDrawable extends LayerDrawable {
-        private final int mAlpha;
-
-        public TranslucentLayerDrawable(int alpha, Drawable... layers) {
-            super(layers);
-            mAlpha = alpha;
-        }
-
-        @Override
-        public void draw(Canvas canvas) {
-            Rect bounds = getBounds();
-            canvas.saveLayerAlpha(bounds.left, bounds.top, bounds.right, bounds.bottom, mAlpha, Canvas.ALL_SAVE_FLAG);
-            super.draw(canvas);
-            canvas.restore();
-        }
-    }
-
     private Drawable createOuterStrokeDrawable(float strokeWidth) {
         ShapeDrawable shapeDrawable = new ShapeDrawable(new OvalShape());
 
@@ -320,7 +312,7 @@ public class FloatingActionButton extends ImageButton {
         paint.setAntiAlias(true);
         paint.setStrokeWidth(strokeWidth);
         paint.setStyle(Style.STROKE);
-        paint.setColor(Color.BLACK);
+        paint.setColor(Color.GREEN);
         paint.setAlpha(opacityToAlpha(0.02f));
 
         return shapeDrawable;
@@ -384,7 +376,8 @@ public class FloatingActionButton extends ImageButton {
             @Override
             public Shader resize(int width, int height) {
                 return new LinearGradient(width / 2, 0, width / 2, height,
-                        new int[]{topStrokeColor, topStrokeColorHalfTransparent, color, bottomStrokeColorHalfTransparent, bottomStrokeColor},
+                        new int[]{topStrokeColor, topStrokeColorHalfTransparent, color,
+                                bottomStrokeColorHalfTransparent, bottomStrokeColor},
                         new float[]{0f, 0.2f, 0.5f, 0.8f, 1f},
                         TileMode.CLAMP
                 );
@@ -404,13 +397,20 @@ public class FloatingActionButton extends ImageButton {
         }
     }
 
-    @Override
-    public void setVisibility(int visibility) {
-        TextView label = getLabelView();
-        if (label != null) {
-            label.setVisibility(visibility);
+    private static class TranslucentLayerDrawable extends LayerDrawable {
+        private final int mAlpha;
+
+        public TranslucentLayerDrawable(int alpha, Drawable... layers) {
+            super(layers);
+            mAlpha = alpha;
         }
 
-        super.setVisibility(visibility);
+        @Override
+        public void draw(Canvas canvas) {
+            Rect bounds = getBounds();
+            canvas.saveLayerAlpha(bounds.left, bounds.top, bounds.right, bounds.bottom, mAlpha, Canvas.ALL_SAVE_FLAG);
+            super.draw(canvas);
+            canvas.restore();
+        }
     }
 }
