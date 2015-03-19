@@ -1,4 +1,5 @@
 <resources>
+
     <dimen name="fab_size_normal">56dp</dimen>
     <dimen name="fab_size_mini">40dp</dimen>
 
@@ -14,4 +15,7 @@
 
     <dimen name="fab_actions_spacing">16dp</dimen>
     <dimen name="fab_labels_margin">8dp</dimen>
+
+    <dimen name="default_label_size">14sp</dimen>
+
 </resources>

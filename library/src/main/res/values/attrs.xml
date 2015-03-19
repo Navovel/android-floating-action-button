@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <declare-styleable name="FloatingActionButton">
         <attr name="fab_colorPressed" format="color"/>
         <attr name="fab_colorDisabled" format="color"/>
@@ -12,15 +13,17 @@
         <attr name="fab_title" format="string"/>
         <attr name="fab_stroke_visible" format="boolean"/>
     </declare-styleable>
+
     <declare-styleable name="FloatingActionsMenu">
-        <attr name="fab_addButtonColorPressed" format="color"/>
-        <attr name="fab_addButtonColorNormal" format="color"/>
-        <attr name="fab_addButtonSize" format="enum">
+        <attr name="fab_mainButtonIcon" format="reference"/>
+        <attr name="fab_expandedMainButtonIcon" format="reference"/>
+        <attr name="fab_mainButtonColorNormal" format="color"/>
+        <attr name="fab_mainButtonColorPressed" format="color"/>
+        <attr name="fab_mainButtonStrokeVisible" format="boolean"/>
+        <attr name="fab_mainButtonSize" format="enum">
             <enum name="normal" value="0"/>
             <enum name="mini" value="1"/>
         </attr>
-        <attr name="fab_addButtonPlusIconColor" format="color"/>
-        <attr name="fab_addButtonStrokeVisible" format="boolean"/>
         <attr name="fab_labelStyle" format="reference"/>
         <attr name="fab_labelsPosition" format="enum">
             <enum name="left" value="0"/>
@@ -33,4 +36,5 @@
             <enum name="right" value="3"/>
         </attr>
     </declare-styleable>
+
 </resources>

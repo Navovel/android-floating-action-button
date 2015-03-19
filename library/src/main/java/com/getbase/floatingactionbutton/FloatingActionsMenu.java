@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
@@ -34,12 +35,16 @@ public class FloatingActionsMenu extends ViewGroup {
     private static Interpolator sCollapseInterpolator = new DecelerateInterpolator(3f);
     private static Interpolator sAlphaExpandInterpolator = new DecelerateInterpolator();
 
-    private int mAddButtonPlusColor;
-    private int mAddButtonColorNormal;
-    private int mAddButtonColorPressed;
-    private int mAddButtonSize;
+    @DrawableRes
+    private int mMainButtonIcon;
+    @DrawableRes
+    private int mExpandedMainButtonIcon;
+
+    private int mMainButtonColorNormal;
+    private int mMainButtonColorPressed;
+    private int mMainButtonSize;
+    private boolean mMainButtonStrokeVisible;
     private int mExpandDirection;
-    private boolean mAddButtonStrokeVisible;
 
     private int mButtonSpacing;
     private int mLabelsMargin;
@@ -51,6 +56,7 @@ public class FloatingActionsMenu extends ViewGroup {
 
     private AnimatorSet mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
     private AnimatorSet mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
+
     private int mMaxButtonWidth;
     private int mMaxButtonHeight;
     private int mLabelsStyle;
@@ -350,6 +356,14 @@ public class FloatingActionsMenu extends ViewGroup {
         mButtonsCount--;
     }
 
+    public void toggle() {
+        if (mExpanded) {
+            collapse();
+        } else {
+            expand();
+        }
+    }
+
     public void collapse() {
         if (mExpanded) {
             mExpanded = false;
@@ -357,17 +371,16 @@ public class FloatingActionsMenu extends ViewGroup {
             mCollapseAnimation.start();
             mExpandAnimation.cancel();
 
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mMainButton.setIcon(mMainButtonIcon);
+                }
+            }, ANIMATION_DURATION);
+
             if (mListener != null) {
                 mListener.onMenuCollapsed();
             }
-        }
-    }
-
-    public void toggle() {
-        if (mExpanded) {
-            collapse();
-        } else {
-            expand();
         }
     }
 
@@ -377,6 +390,13 @@ public class FloatingActionsMenu extends ViewGroup {
             mTouchDelegateGroup.setEnabled(true);
             mCollapseAnimation.cancel();
             mExpandAnimation.start();
+
+            postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mMainButton.setIcon(mExpandedMainButtonIcon);
+                }
+            }, ANIMATION_DURATION);
 
             if (mListener != null) {
                 mListener.onMenuExpanded();
@@ -399,13 +419,15 @@ public class FloatingActionsMenu extends ViewGroup {
         setTouchDelegate(mTouchDelegateGroup);
 
         TypedArray attr = context.obtainStyledAttributes(attributeSet, R.styleable.FloatingActionsMenu, 0, 0);
-        mAddButtonPlusColor = attr.getColor(R.styleable.FloatingActionsMenu_fab_addButtonPlusIconColor, getColor(android.R.color.white));
-        mAddButtonColorNormal = attr.getColor(R.styleable.FloatingActionsMenu_fab_addButtonColorNormal, getColor(android.R.color.holo_blue_dark));
-        mAddButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_addButtonColorPressed, getColor(android.R.color.holo_blue_light));
-        mAddButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_addButtonSize, FloatingActionButton.SIZE_NORMAL);
-        mAddButtonStrokeVisible = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_addButtonStrokeVisible, true);
+        mMainButtonIcon = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_mainButtonIcon, 0);
+        mExpandedMainButtonIcon = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_expandedMainButtonIcon, mMainButtonIcon);
+        mMainButtonColorNormal = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorNormal, getColor(android.R.color.holo_blue_dark));
+        mMainButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorPressed, ColorUtils.darkenColor(mMainButtonColorNormal));
+
+        mMainButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_mainButtonSize, FloatingActionButton.SIZE_NORMAL);
+        mMainButtonStrokeVisible = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_mainButtonStrokeVisible, true);
         mExpandDirection = attr.getInt(R.styleable.FloatingActionsMenu_fab_expandDirection, EXPAND_UP);
-        mLabelsStyle = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_labelStyle, 0);
+        mLabelsStyle = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_labelStyle, R.style.default_labels_style);
         mLabelsPosition = attr.getInt(R.styleable.FloatingActionsMenu_fab_labelsPosition, LABELS_ON_LEFT_SIDE);
         attr.recycle();
 
@@ -423,7 +445,10 @@ public class FloatingActionsMenu extends ViewGroup {
     private void createMainButtonButton(Context context) {
         mMainButton = new FloatingActionButton(context);
         mMainButton.setId(R.id.fab_expand_menu_button);
-        mMainButton.setSize(mAddButtonSize);
+        mMainButton.setIcon(mMainButtonIcon);
+        mMainButton.setSize(mMainButtonSize);
+        mMainButton.setColorNormal(mMainButtonColorNormal);
+        mMainButton.setColorPressed(mMainButtonColorPressed);
         mMainButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
