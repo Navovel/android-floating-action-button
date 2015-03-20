@@ -65,7 +65,15 @@ public class FloatingActionsMenu extends ViewGroup {
 
     private TouchDelegateGroup mTouchDelegateGroup;
 
-    private OnFloatingActionsMenuUpdateListener mListener;
+    private OnFloatingActionsMenuUpdateListener mMenuUpdateListener;
+
+    private OnActionsMenuItemClickListener mMenuClickListener;
+
+    public interface OnActionsMenuItemClickListener {
+        void onMainItemClick();
+
+        void onItemClick(int itemId);
+    }
 
     public interface OnFloatingActionsMenuUpdateListener {
         void onMenuExpanded();
@@ -91,12 +99,25 @@ public class FloatingActionsMenu extends ViewGroup {
     protected void onFinishInflate() {
         super.onFinishInflate();
 
+        int childrenAmount = getChildCount();
+        for (int i = 0; i < childrenAmount; i++) {
+            final View child = getChildAt(i);
+            final int viewId = child.getId();
+            child.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (viewId == R.id.fab_expand_menu_button) {
+                        handleMainButtonClick();
+                    } else if (mMenuClickListener != null) {
+                        mMenuClickListener.onItemClick(viewId);
+                    }
+                }
+            });
+        }
+
         bringChildToFront(mMainButton);
         mButtonsCount = getChildCount();
-
-        if (mLabelsStyle != 0) {
-            createLabels();
-        }
+        createLabels();
     }
 
     @Override
@@ -337,31 +358,30 @@ public class FloatingActionsMenu extends ViewGroup {
         }
     }
 
+    @Override
+    public void setOnClickListener(OnClickListener l) {
+        throw new UnsupportedOperationException("Unsupported operation. To track click events use " +
+                "setOnActionsMenuItemClickListener() instead.");
+    }
+
+    public void setOnActionsMenuItemClickListener(OnActionsMenuItemClickListener listener) {
+        this.mMenuClickListener = listener;
+    }
+
     public void setOnFloatingActionsMenuUpdateListener(OnFloatingActionsMenuUpdateListener listener) {
-        mListener = listener;
+        mMenuUpdateListener = listener;
     }
 
     public void addButton(FloatingActionButton button) {
         addView(button, mButtonsCount - 1);
         mButtonsCount++;
-
-        if (mLabelsStyle != 0) {
-            createLabels();
-        }
+        createLabels();
     }
 
     public void removeButton(FloatingActionButton button) {
         removeView(button.getLabelView());
         removeView(button);
         mButtonsCount--;
-    }
-
-    public void toggle() {
-        if (mExpanded) {
-            collapse();
-        } else {
-            expand();
-        }
     }
 
     public void collapse() {
@@ -378,8 +398,8 @@ public class FloatingActionsMenu extends ViewGroup {
                 }
             }, ANIMATION_DURATION);
 
-            if (mListener != null) {
-                mListener.onMenuCollapsed();
+            if (mMenuUpdateListener != null) {
+                mMenuUpdateListener.onMenuCollapsed();
             }
         }
     }
@@ -398,8 +418,8 @@ public class FloatingActionsMenu extends ViewGroup {
                 }
             }, ANIMATION_DURATION);
 
-            if (mListener != null) {
-                mListener.onMenuExpanded();
+            if (mMenuUpdateListener != null) {
+                mMenuUpdateListener.onMenuExpanded();
             }
         }
     }
@@ -438,6 +458,12 @@ public class FloatingActionsMenu extends ViewGroup {
         createMainButtonButton(context);
     }
 
+    private void handleMainButtonClick() {
+        if (mExpanded) {
+            if (mMenuClickListener != null) mMenuClickListener.onMainItemClick();
+        } else expand();
+    }
+
     private boolean expandsHorizontally() {
         return mExpandDirection == EXPAND_LEFT || mExpandDirection == EXPAND_RIGHT;
     }
@@ -449,13 +475,6 @@ public class FloatingActionsMenu extends ViewGroup {
         mMainButton.setSize(mMainButtonSize);
         mMainButton.setColorNormal(mMainButtonColorNormal);
         mMainButton.setColorPressed(mMainButtonColorPressed);
-        mMainButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggle();
-            }
-        });
-
         addView(mMainButton, super.generateDefaultLayoutParams());
     }
 
