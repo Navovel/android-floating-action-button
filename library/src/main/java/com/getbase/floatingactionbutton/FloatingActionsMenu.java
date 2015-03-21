@@ -135,21 +135,23 @@ public class FloatingActionsMenu extends ViewGroup {
         super.onAttachedToWindow();
 
         final ViewGroup parentViewGroup = (ViewGroup) getParent();
-
-        int childrenAmount = parentViewGroup.getChildCount();
-        for (int i = 0; i < childrenAmount; i++) {
-            View v = parentViewGroup.getChildAt(i);
-            if (v instanceof Toolbar) {
-                mToolbar = (Toolbar) v;
-                mDefaultToolbarColor = mToolbar.getSolidColor();
-                break;
-            }
-        }
-
         if (parentViewGroup != null) {
-            mScrimView = new View(getContext());
+            // Search for Toolbar widget among parent's children. Store
+            // a reference if it was found.
+            int childrenAmount = parentViewGroup.getChildCount();
+            for (int i = 0; i < childrenAmount; i++) {
+                View v = parentViewGroup.getChildAt(i);
+                if (v instanceof Toolbar) {
+                    mToolbar = (Toolbar) v;
+                    mDefaultToolbarColor = mToolbar.getSolidColor();
+                    break;
+                }
+            }
+
+            // Prepare an overlaying view which will be shown when the menu is expanded.
             ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
+            mScrimView = new View(getContext());
             mScrimView.setLayoutParams(lp);
             mScrimView.setBackgroundColor(getColor(R.color.scrim_color));
             mScrimView.setVisibility(View.INVISIBLE);
