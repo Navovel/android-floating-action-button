@@ -1,17 +1,22 @@
 package com.getbase.floatingactionbutton.sample;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActionBarActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FloatingActionsMenu menu = (FloatingActionsMenu) findViewById(R.id.multiple_actions);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        final FloatingActionsMenu menu = (FloatingActionsMenu) findViewById(R.id.multiple_actions);
         menu.setOnActionsMenuItemClickListener(new FloatingActionsMenu.OnActionsMenuItemClickListener() {
 
             @Override
@@ -20,7 +25,7 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onItemClick(int itemId) {
+            public void onSecondaryItemClick(int itemId) {
                 String msg;
                 switch (itemId) {
                     case R.id.action_a:

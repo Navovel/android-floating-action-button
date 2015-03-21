@@ -1,5 +1,7 @@
 package com.getbase.floatingactionbutton;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -10,6 +12,8 @@ import android.os.Parcelable;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.TouchDelegate;
@@ -21,6 +25,7 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
 
 public class FloatingActionsMenu extends ViewGroup {
+
     public static final int EXPAND_UP = 0;
     public static final int EXPAND_DOWN = 1;
     public static final int EXPAND_LEFT = 2;
@@ -53,6 +58,11 @@ public class FloatingActionsMenu extends ViewGroup {
     private boolean mExpanded;
 
     private FloatingActionButton mMainButton;
+    @Nullable
+    private View mScrimView;
+    @Nullable
+    private Toolbar mToolbar;
+    private int mDefaultToolbarColor;
 
     private AnimatorSet mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
     private AnimatorSet mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
@@ -72,7 +82,7 @@ public class FloatingActionsMenu extends ViewGroup {
     public interface OnActionsMenuItemClickListener {
         void onMainItemClick();
 
-        void onItemClick(int itemId);
+        void onSecondaryItemClick(int itemId);
     }
 
     public interface OnFloatingActionsMenuUpdateListener {
@@ -109,7 +119,7 @@ public class FloatingActionsMenu extends ViewGroup {
                     if (viewId == R.id.fab_expand_menu_button) {
                         handleMainButtonClick();
                     } else if (mMenuClickListener != null) {
-                        mMenuClickListener.onItemClick(viewId);
+                        mMenuClickListener.onSecondaryItemClick(viewId);
                     }
                 }
             });
@@ -118,6 +128,40 @@ public class FloatingActionsMenu extends ViewGroup {
         bringChildToFront(mMainButton);
         mButtonsCount = getChildCount();
         createLabels();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        final ViewGroup parentViewGroup = (ViewGroup) getParent();
+
+        int childrenAmount = parentViewGroup.getChildCount();
+        for (int i = 0; i < childrenAmount; i++) {
+            View v = parentViewGroup.getChildAt(i);
+            if (v instanceof Toolbar) {
+                mToolbar = (Toolbar) v;
+                mDefaultToolbarColor = mToolbar.getSolidColor();
+                break;
+            }
+        }
+
+        if (parentViewGroup != null) {
+            mScrimView = new View(getContext());
+            ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            mScrimView.setLayoutParams(lp);
+            mScrimView.setBackgroundColor(getColor(R.color.scrim_color));
+            mScrimView.setVisibility(View.INVISIBLE);
+            mScrimView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (isExpanded()) collapse();
+                }
+            });
+            parentViewGroup.addView(mScrimView);
+            bringToFront();
+        }
     }
 
     @Override
@@ -387,16 +431,22 @@ public class FloatingActionsMenu extends ViewGroup {
     public void collapse() {
         if (mExpanded) {
             mExpanded = false;
+            if (mScrimView != null) mScrimView.setVisibility(View.INVISIBLE);
             mTouchDelegateGroup.setEnabled(false);
             mCollapseAnimation.start();
             mExpandAnimation.cancel();
 
-            postDelayed(new Runnable() {
+            if (mToolbar != null) {
+                mToolbar.setBackgroundColor(mDefaultToolbarColor);
+            }
+
+            mCollapseAnimation.addListener(new AnimatorListenerAdapter() {
                 @Override
-                public void run() {
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
                     mMainButton.setIcon(mMainButtonIcon);
                 }
-            }, ANIMATION_DURATION);
+            });
 
             if (mMenuUpdateListener != null) {
                 mMenuUpdateListener.onMenuCollapsed();
@@ -407,16 +457,23 @@ public class FloatingActionsMenu extends ViewGroup {
     public void expand() {
         if (!mExpanded) {
             mExpanded = true;
+            if (mScrimView != null) mScrimView.setVisibility(View.VISIBLE);
             mTouchDelegateGroup.setEnabled(true);
             mCollapseAnimation.cancel();
             mExpandAnimation.start();
 
-            postDelayed(new Runnable() {
+            if (mToolbar != null) {
+                int scrimColor = getColor(R.color.scrim_color);
+                mToolbar.setBackgroundColor(scrimColor);
+            }
+
+            mExpandAnimation.addListener(new AnimatorListenerAdapter() {
                 @Override
-                public void run() {
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
                     mMainButton.setIcon(mExpandedMainButtonIcon);
                 }
-            }, ANIMATION_DURATION);
+            });
 
             if (mMenuUpdateListener != null) {
                 mMenuUpdateListener.onMenuExpanded();
