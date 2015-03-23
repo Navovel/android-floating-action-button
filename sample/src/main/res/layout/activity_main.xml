@@ -28,6 +28,7 @@
         fab:fab_expandedMainButtonIcon="@android:drawable/sym_call_outgoing"
         fab:fab_mainButtonSize="normal"
         fab:fab_mainButtonColorNormal="#FC5830"
+        fab:fab_showOverlay="true"
         android:layout_marginBottom="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginEnd="16dp">

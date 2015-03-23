@@ -24,6 +24,7 @@
             <enum name="normal" value="0"/>
             <enum name="mini" value="1"/>
         </attr>
+        <attr name="fab_showOverlay" format="boolean"/>
         <attr name="fab_labelStyle" format="reference"/>
         <attr name="fab_labelsPosition" format="enum">
             <enum name="left" value="0"/>

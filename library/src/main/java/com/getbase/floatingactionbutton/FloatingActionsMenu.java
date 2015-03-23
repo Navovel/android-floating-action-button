@@ -49,6 +49,7 @@ public class FloatingActionsMenu extends ViewGroup {
     private int mMainButtonColorPressed;
     private int mMainButtonSize;
     private boolean mMainButtonStrokeVisible;
+    private boolean mShowOverlay;
     private int mExpandDirection;
 
     private int mButtonSpacing;
@@ -59,7 +60,7 @@ public class FloatingActionsMenu extends ViewGroup {
 
     private FloatingActionButton mMainButton;
     @Nullable
-    private View mScrimView;
+    private View mOverlayView;
     @Nullable
     private Toolbar mToolbar;
     private int mDefaultToolbarColor;
@@ -135,7 +136,7 @@ public class FloatingActionsMenu extends ViewGroup {
         super.onAttachedToWindow();
 
         final ViewGroup parentViewGroup = (ViewGroup) getParent();
-        if (parentViewGroup != null) {
+        if (mShowOverlay && parentViewGroup != null) {
             // Search for Toolbar widget among parent's children. Store
             // a reference if it was found.
             int childrenAmount = parentViewGroup.getChildCount();
@@ -151,17 +152,17 @@ public class FloatingActionsMenu extends ViewGroup {
             // Prepare an overlaying view which will be shown when the menu is expanded.
             ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
-            mScrimView = new View(getContext());
-            mScrimView.setLayoutParams(lp);
-            mScrimView.setBackgroundColor(getColor(R.color.scrim_color));
-            mScrimView.setVisibility(View.INVISIBLE);
-            mScrimView.setOnClickListener(new OnClickListener() {
+            mOverlayView = new View(getContext());
+            mOverlayView.setLayoutParams(lp);
+            mOverlayView.setBackgroundColor(getColor(R.color.overlay_color));
+            mOverlayView.setVisibility(View.INVISIBLE);
+            mOverlayView.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if (isExpanded()) collapse();
                 }
             });
-            parentViewGroup.addView(mScrimView);
+            parentViewGroup.addView(mOverlayView);
             bringToFront();
         }
     }
@@ -430,15 +431,23 @@ public class FloatingActionsMenu extends ViewGroup {
         mButtonsCount--;
     }
 
+    public void setOverlayEnabled(boolean isEnabled) {
+        this.mShowOverlay = isEnabled;
+    }
+
+    public boolean isOverlayEnabled() {
+        return mShowOverlay;
+    }
+
     public void collapse() {
         if (mExpanded) {
             mExpanded = false;
-            if (mScrimView != null) mScrimView.setVisibility(View.INVISIBLE);
+            if (mShowOverlay && mOverlayView != null) mOverlayView.setVisibility(View.INVISIBLE);
             mTouchDelegateGroup.setEnabled(false);
             mCollapseAnimation.start();
             mExpandAnimation.cancel();
 
-            if (mToolbar != null) {
+            if (mShowOverlay && mToolbar != null) {
                 mToolbar.setBackgroundColor(mDefaultToolbarColor);
             }
 
@@ -459,14 +468,14 @@ public class FloatingActionsMenu extends ViewGroup {
     public void expand() {
         if (!mExpanded) {
             mExpanded = true;
-            if (mScrimView != null) mScrimView.setVisibility(View.VISIBLE);
+            if (mShowOverlay && mOverlayView != null) mOverlayView.setVisibility(View.VISIBLE);
             mTouchDelegateGroup.setEnabled(true);
             mCollapseAnimation.cancel();
             mExpandAnimation.start();
 
-            if (mToolbar != null) {
-                int scrimColor = getColor(R.color.scrim_color);
-                mToolbar.setBackgroundColor(scrimColor);
+            if (mShowOverlay && mToolbar != null) {
+                int overlayColor = getColor(R.color.overlay_color);
+                mToolbar.setBackgroundColor(overlayColor);
             }
 
             mExpandAnimation.addListener(new AnimatorListenerAdapter() {
@@ -502,9 +511,9 @@ public class FloatingActionsMenu extends ViewGroup {
         mExpandedMainButtonIcon = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_expandedMainButtonIcon, mMainButtonIcon);
         mMainButtonColorNormal = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorNormal, getColor(android.R.color.holo_blue_dark));
         mMainButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorPressed, ColorUtils.darkenColor(mMainButtonColorNormal));
-
         mMainButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_mainButtonSize, FloatingActionButton.SIZE_NORMAL);
         mMainButtonStrokeVisible = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_mainButtonStrokeVisible, true);
+        mShowOverlay = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_showOverlay, false);
         mExpandDirection = attr.getInt(R.styleable.FloatingActionsMenu_fab_expandDirection, EXPAND_UP);
         mLabelsStyle = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_labelStyle, R.style.default_labels_style);
         mLabelsPosition = attr.getInt(R.styleable.FloatingActionsMenu_fab_labelsPosition, LABELS_ON_LEFT_SIDE);
