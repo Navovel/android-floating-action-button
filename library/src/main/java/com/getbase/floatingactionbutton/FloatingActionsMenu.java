@@ -136,7 +136,7 @@ public class FloatingActionsMenu extends ViewGroup {
         super.onAttachedToWindow();
 
         final ViewGroup parentViewGroup = (ViewGroup) getParent();
-        if (parentViewGroup != null) {
+        if (mShowOverlay && parentViewGroup != null) {
             // Search for Toolbar widget among parent's children. Store
             // a reference if it was found.
             int childrenAmount = parentViewGroup.getChildCount();
@@ -147,12 +147,6 @@ public class FloatingActionsMenu extends ViewGroup {
                     mDefaultToolbarColor = mToolbar.getSolidColor();
                     break;
                 }
-            }
-
-            if (!mShowOverlay) {
-                parentViewGroup.setOnClickListener(new OuterAreaClickListener());
-                if (mToolbar != null) mToolbar.setOnClickListener(new OuterAreaClickListener());
-                return;
             }
 
             // Prepare an overlaying view which will be shown when the menu is expanded.
