@@ -136,7 +136,7 @@ public class FloatingActionsMenu extends ViewGroup {
         super.onAttachedToWindow();
 
         final ViewGroup parentViewGroup = (ViewGroup) getParent();
-        if (mShowOverlay && parentViewGroup != null) {
+        if (parentViewGroup != null) {
             // Search for Toolbar widget among parent's children. Store
             // a reference if it was found.
             int childrenAmount = parentViewGroup.getChildCount();
@@ -149,6 +149,12 @@ public class FloatingActionsMenu extends ViewGroup {
                 }
             }
 
+            if (!mShowOverlay) {
+                parentViewGroup.setOnClickListener(new OuterAreaClickListener());
+                if (mToolbar != null) mToolbar.setOnClickListener(new OuterAreaClickListener());
+                return;
+            }
+
             // Prepare an overlaying view which will be shown when the menu is expanded.
             ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
@@ -156,12 +162,7 @@ public class FloatingActionsMenu extends ViewGroup {
             mOverlayView.setLayoutParams(lp);
             mOverlayView.setBackgroundColor(getColor(R.color.overlay_color));
             mOverlayView.setVisibility(View.INVISIBLE);
-            mOverlayView.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (isExpanded()) collapse();
-                }
-            });
+            mOverlayView.setOnClickListener(new OuterAreaClickListener());
             parentViewGroup.addView(mOverlayView);
             bringToFront();
         }
@@ -574,7 +575,15 @@ public class FloatingActionsMenu extends ViewGroup {
         }
     }
 
-    public static class SavedState extends BaseSavedState {
+    private final class OuterAreaClickListener implements OnClickListener {
+
+        @Override
+        public void onClick(View view) {
+            if (isExpanded()) collapse();
+        }
+    }
+
+    private static class SavedState extends BaseSavedState {
         public boolean mExpanded;
 
         public SavedState(Parcelable parcel) {
