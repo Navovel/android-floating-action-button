@@ -36,6 +36,7 @@ public class FloatingActionsMenu extends ViewGroup {
     public static final int LABELS_ON_RIGHT_SIDE = 1;
 
     private static final int ANIMATION_DURATION = 300;
+    private static final int OVERLAY_VIEW_ID = 927800;
 
     private static Interpolator sExpandInterpolator = new OvershootInterpolator();
     private static Interpolator sCollapseInterpolator = new DecelerateInterpolator(3f);
@@ -122,6 +123,7 @@ public class FloatingActionsMenu extends ViewGroup {
         createLabels();
     }
 
+    @SuppressWarnings("ResourceType")
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -132,13 +134,20 @@ public class FloatingActionsMenu extends ViewGroup {
             ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
             mOverlayView = new View(getContext());
+            mOverlayView.setId(OVERLAY_VIEW_ID);
             mOverlayView.setLayoutParams(lp);
-            mOverlayView.setBackgroundColor(getColor(R.color.overlay_color));
-            mOverlayView.setVisibility(View.INVISIBLE);
+            mOverlayView.setBackgroundColor(getColor(android.R.color.holo_green_light));
+            mOverlayView.setVisibility(mExpanded ? View.VISIBLE : View.INVISIBLE);
             mOverlayView.setOnClickListener(new OuterAreaClickListener());
             parentViewGroup.addView(mOverlayView);
             bringToFront();
         }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeView(mOverlayView);
+        super.onDetachedFromWindow();
     }
 
     @Override
