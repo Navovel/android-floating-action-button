@@ -39,37 +39,34 @@ public class FloatingActionsMenu extends ViewGroup {
     private static Interpolator sCollapseInterpolator = new DecelerateInterpolator(3f);
     private static Interpolator sAlphaExpandInterpolator = new DecelerateInterpolator();
 
-    @DrawableRes
-    private int mMainButtonIcon;
-    @DrawableRes
-    private int mExpandedMainButtonIcon;
-
-    private String mMainButtonTitle;
-    private int mMainButtonColorNormal;
-    private int mMainButtonColorPressed;
-    private int mMainButtonSize;
-    private boolean mMainButtonStrokeVisible;
-    private boolean mShowOverlay;
-    private int mExpandDirection;
-
-    private int mButtonSpacing;
-    private int mLabelsMargin;
-    private int mLabelsVerticalOffset;
-
-    private boolean mExpanded;
+    private AnimatorSet mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
+    private AnimatorSet mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
 
     private FloatingActionButton mMainButton;
     @Nullable
     private View mOverlayView;
 
-    private AnimatorSet mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
-    private AnimatorSet mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
-
-    private int mMaxButtonWidth;
-    private int mMaxButtonHeight;
+    @DrawableRes
+    private int mMainButtonIcon;
+    @DrawableRes
+    private int mExpandedMainButtonIcon;
+    private String mMainButtonTitle;
+    private int mMainButtonColorNormal;
+    private int mMainButtonColorPressed;
+    private int mMainButtonSize;
     private int mLabelsStyle;
+    private boolean mShowOverlay;
+    private int mExpandDirection;
+
+    private boolean mExpanded;
+    private int mButtonSpacing;
+    private int mLabelsMargin;
+    private int mLabelsVerticalOffset;
+    private int mMaxButtonWidth;
     private int mLabelsPosition;
     private int mButtonsCount;
+
+    private Rect mTouchAreaRect;
 
     private TouchDelegateGroup mTouchDelegateGroup;
 
@@ -87,10 +84,6 @@ public class FloatingActionsMenu extends ViewGroup {
         void onMenuExpanded();
 
         void onMenuCollapsed();
-    }
-
-    public FloatingActionsMenu(Context context) {
-        this(context, null);
     }
 
     public FloatingActionsMenu(Context context, AttributeSet attrs) {
@@ -155,7 +148,6 @@ public class FloatingActionsMenu extends ViewGroup {
         int height = 0;
 
         mMaxButtonWidth = 0;
-        mMaxButtonHeight = 0;
         int maxLabelWidth = 0;
 
         for (int i = 0; i < mButtonsCount; i++) {
@@ -222,12 +214,12 @@ public class FloatingActionsMenu extends ViewGroup {
         mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
         mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
 
-        Rect mbTouchArea = new Rect(
+        mTouchAreaRect = new Rect(
                 Math.min(mainButtonLeft, mbLabelLeft),
                 mainButtonY - mButtonSpacing / 2,
                 Math.max(mainButtonLeft + mMainButton.getMeasuredWidth(), mbLabelRight),
                 mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing / 2);
-        mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mbTouchArea, mMainButton));
+        mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mTouchAreaRect, mMainButton));
 
         for (int i = mButtonsCount - 1; i >= 0; i--) {
             final View child = getChildAt(i);
@@ -268,12 +260,12 @@ public class FloatingActionsMenu extends ViewGroup {
 
                 label.layout(labelLeft, labelTop, labelRight, labelTop + label.getMeasuredHeight());
 
-                Rect touchArea = new Rect(
+                mTouchAreaRect = new Rect(
                         Math.min(childX, labelLeft),
                         childY - mButtonSpacing / 2,
                         Math.max(childX + child.getMeasuredWidth(), labelRight),
                         childY + child.getMeasuredHeight() + mButtonSpacing / 2);
-                mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(touchArea, child));
+                mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mTouchAreaRect, child));
 
                 label.setTranslationY(mExpanded ? expandedTranslation : collapsedTranslation);
                 label.setAlpha(mExpanded ? 1f : 0f);
@@ -448,7 +440,6 @@ public class FloatingActionsMenu extends ViewGroup {
         mMainButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorPressed, ColorUtils.darkenColor(mMainButtonColorNormal));
         mMainButtonTitle = attr.getString(R.styleable.FloatingActionsMenu_fab_mainButtonTitle);
         mMainButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_mainButtonSize, FloatingActionButton.SIZE_NORMAL);
-        mMainButtonStrokeVisible = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_mainButtonStrokeVisible, true);
         mShowOverlay = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_showOverlay, false);
         mExpandDirection = attr.getInt(R.styleable.FloatingActionsMenu_fab_expandDirection, EXPAND_UP);
         mLabelsStyle = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_labelStyle, R.style.default_labels_style);
