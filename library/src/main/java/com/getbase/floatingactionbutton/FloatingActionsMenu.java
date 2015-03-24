@@ -222,6 +222,13 @@ public class FloatingActionsMenu extends ViewGroup {
         mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
         mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
 
+        Rect mbTouchArea = new Rect(
+                Math.min(mainButtonLeft, mbLabelLeft),
+                mainButtonY - mButtonSpacing / 2,
+                Math.max(mainButtonLeft + mMainButton.getMeasuredWidth(), mbLabelRight),
+                mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing / 2);
+        mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mbTouchArea, mMainButton));
+
         for (int i = mButtonsCount - 1; i >= 0; i--) {
             final View child = getChildAt(i);
 
