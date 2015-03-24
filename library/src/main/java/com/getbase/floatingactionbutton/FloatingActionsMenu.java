@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.ColorRes;
@@ -24,6 +25,7 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class FloatingActionsMenu extends ViewGroup {
 
@@ -327,6 +329,20 @@ public class FloatingActionsMenu extends ViewGroup {
         Parcelable superState = super.onSaveInstanceState();
         SavedState savedState = new SavedState(superState);
         savedState.mExpanded = mExpanded;
+
+        HashMap<Integer, String> labelTitlesMap = new HashMap<>(mButtonsCount);
+        int childrenAmount = getChildCount();
+        for (int i = 0; i < childrenAmount; i++) {
+            View v = getChildAt(i);
+            if (v instanceof FloatingActionButton) {
+                FloatingActionButton fab = (FloatingActionButton) v;
+                int id = fab.getId();
+                String title = fab.getTitle();
+                labelTitlesMap.put(id, title);
+            }
+        }
+        savedState.mLabelTitlesMap = labelTitlesMap;
+
         return savedState;
     }
 
@@ -335,6 +351,22 @@ public class FloatingActionsMenu extends ViewGroup {
         if (state instanceof SavedState) {
             SavedState savedState = (SavedState) state;
             mExpanded = savedState.mExpanded;
+
+            int iconId = mExpanded ? mExpandedMainButtonIcon : mMainButtonIcon;
+            mMainButton.setIcon(iconId);
+
+            HashMap<Integer, String> labelTitlesMap = savedState.mLabelTitlesMap;
+            int childrenAmount = getChildCount();
+            for (int i = 0; i < childrenAmount; i++) {
+                View v = getChildAt(i);
+                if (v instanceof FloatingActionButton) {
+                    FloatingActionButton fab = (FloatingActionButton) v;
+                    int id = fab.getId();
+                    String text = labelTitlesMap.get(id);
+                    fab.setTitle(text);
+                }
+            }
+
             mTouchDelegateGroup.setEnabled(mExpanded);
             super.onRestoreInstanceState(savedState.getSuperState());
         } else {
@@ -507,7 +539,9 @@ public class FloatingActionsMenu extends ViewGroup {
 
     private static class SavedState extends BaseSavedState {
 
+        private static final String MAP_BUNDLE_KEY = "HashMap";
         public boolean mExpanded;
+        public HashMap<Integer, String> mLabelTitlesMap;
 
         public SavedState(Parcelable parcel) {
             super(parcel);
@@ -516,12 +550,16 @@ public class FloatingActionsMenu extends ViewGroup {
         private SavedState(Parcel in) {
             super(in);
             mExpanded = in.readInt() == 1;
+            mLabelTitlesMap = (HashMap<Integer, String>) in.readBundle().getSerializable(MAP_BUNDLE_KEY);
         }
 
         @Override
         public void writeToParcel(@NonNull Parcel out, int flags) {
             super.writeToParcel(out, flags);
+            Bundle b = new Bundle(1);
+            b.putSerializable(MAP_BUNDLE_KEY, mLabelTitlesMap);
             out.writeInt(mExpanded ? 1 : 0);
+            out.writeBundle(b);
         }
 
         public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
