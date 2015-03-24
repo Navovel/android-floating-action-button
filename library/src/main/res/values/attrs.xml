@@ -20,6 +20,7 @@
         <attr name="fab_mainButtonColorNormal" format="color"/>
         <attr name="fab_mainButtonColorPressed" format="color"/>
         <attr name="fab_mainButtonStrokeVisible" format="boolean"/>
+        <attr name="fab_mainButtonTitle" format="string"/>
         <attr name="fab_mainButtonSize" format="enum">
             <enum name="normal" value="0"/>
             <enum name="mini" value="1"/>

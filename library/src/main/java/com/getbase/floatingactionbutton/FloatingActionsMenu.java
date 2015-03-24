@@ -13,7 +13,6 @@ import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.TouchDelegate;
@@ -23,6 +22,8 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public class FloatingActionsMenu extends ViewGroup {
 
@@ -45,6 +46,7 @@ public class FloatingActionsMenu extends ViewGroup {
     @DrawableRes
     private int mExpandedMainButtonIcon;
 
+    private String mMainButtonTitle;
     private int mMainButtonColorNormal;
     private int mMainButtonColorPressed;
     private int mMainButtonSize;
@@ -61,9 +63,6 @@ public class FloatingActionsMenu extends ViewGroup {
     private FloatingActionButton mMainButton;
     @Nullable
     private View mOverlayView;
-    @Nullable
-    private Toolbar mToolbar;
-    private int mDefaultToolbarColor;
 
     private AnimatorSet mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
     private AnimatorSet mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
@@ -137,18 +136,6 @@ public class FloatingActionsMenu extends ViewGroup {
 
         final ViewGroup parentViewGroup = (ViewGroup) getParent();
         if (mShowOverlay && parentViewGroup != null) {
-            // Search for Toolbar widget among parent's children. Store
-            // a reference if it was found.
-            int childrenAmount = parentViewGroup.getChildCount();
-            for (int i = 0; i < childrenAmount; i++) {
-                View v = parentViewGroup.getChildAt(i);
-                if (v instanceof Toolbar) {
-                    mToolbar = (Toolbar) v;
-                    mDefaultToolbarColor = mToolbar.getSolidColor();
-                    break;
-                }
-            }
-
             // Prepare an overlaying view which will be shown when the menu is expanded.
             ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT);
@@ -233,14 +220,14 @@ public class FloatingActionsMenu extends ViewGroup {
                     mTouchDelegateGroup.clearTouchDelegates();
                 }
 
-                int addButtonY = expandUp ? b - t - mMainButton.getMeasuredHeight() : 0;
+                int mainButtonY = expandUp ? b - t - mMainButton.getMeasuredHeight() : 0;
                 // Ensure mAddButton is centered on the line where the buttons should be
                 int buttonsHorizontalCenter = mLabelsPosition == LABELS_ON_LEFT_SIDE
                         ? r - l - mMaxButtonWidth / 2
                         : mMaxButtonWidth / 2;
-                int addButtonLeft = buttonsHorizontalCenter - mMainButton.getMeasuredWidth() / 2;
-                mMainButton.layout(addButtonLeft, addButtonY, addButtonLeft + mMainButton.getMeasuredWidth(),
-                        addButtonY + mMainButton.getMeasuredHeight());
+                int mainButtonLeft = buttonsHorizontalCenter - mMainButton.getMeasuredWidth() / 2;
+                mMainButton.layout(mainButtonLeft, mainButtonY, mainButtonLeft + mMainButton.getMeasuredWidth(),
+                        mainButtonY + mMainButton.getMeasuredHeight());
 
                 int labelsOffset = mMaxButtonWidth / 2 + mLabelsMargin;
                 int labelsXNearButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
@@ -248,8 +235,24 @@ public class FloatingActionsMenu extends ViewGroup {
                         : buttonsHorizontalCenter + labelsOffset;
 
                 int nextY = expandUp ?
-                        addButtonY - mButtonSpacing :
-                        addButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing;
+                        mainButtonY - mButtonSpacing :
+                        mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing;
+
+                // Add label for the main menu button
+                View mainBtnLabel = (View) mMainButton.getTag(R.id.fab_label);
+                int mbLabelXAwayFromButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                        ? labelsXNearButton - mainBtnLabel.getMeasuredWidth()
+                        : labelsXNearButton + mainBtnLabel.getMeasuredWidth();
+                int mbLabelLeft = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                        ? mbLabelXAwayFromButton
+                        : labelsXNearButton;
+                int mbLabelRight = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                        ? labelsXNearButton
+                        : mbLabelXAwayFromButton;
+                int mbLabelTop = mainButtonY - mLabelsVerticalOffset
+                        + (mMainButton.getMeasuredHeight() - mainBtnLabel.getMeasuredHeight()) / 2;
+                mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
+                mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
 
                 for (int i = mButtonsCount - 1; i >= 0; i--) {
                     final View child = getChildAt(i);
@@ -260,7 +263,7 @@ public class FloatingActionsMenu extends ViewGroup {
                     int childY = expandUp ? nextY - child.getMeasuredHeight() : nextY;
                     child.layout(childX, childY, childX + child.getMeasuredWidth(), childY + child.getMeasuredHeight());
 
-                    float collapsedTranslation = addButtonY - childY;
+                    float collapsedTranslation = mainButtonY - childY;
                     float expandedTranslation = 0f;
 
                     child.setTranslationY(mExpanded ? expandedTranslation : collapsedTranslation);
@@ -310,21 +313,36 @@ public class FloatingActionsMenu extends ViewGroup {
                             childY - mButtonSpacing :
                             childY + child.getMeasuredHeight() + mButtonSpacing;
                 }
+
+                ObjectAnimator expandAnimator = ObjectAnimator.ofFloat(mainBtnLabel, "alpha", 0f, 1f);
+                expandAnimator.setInterpolator(sAlphaExpandInterpolator);
+                ArrayList<Animator> list1 = mExpandAnimation.getChildAnimations();
+                list1.add(expandAnimator);
+                mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
+                mExpandAnimation.playTogether(list1);
+
+                ObjectAnimator collapseAnimator = ObjectAnimator.ofFloat(mainBtnLabel, "alpha", 1f, 0f);
+                collapseAnimator.setInterpolator(sAlphaExpandInterpolator);
+                ArrayList<Animator> list2 = mCollapseAnimation.getChildAnimations();
+                list2.add(collapseAnimator);
+                mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
+                mCollapseAnimation.playTogether(list2);
+
                 break;
 
             case EXPAND_LEFT:
             case EXPAND_RIGHT:
                 boolean expandLeft = mExpandDirection == EXPAND_LEFT;
 
-                int addButtonX = expandLeft ? r - l - mMainButton.getMeasuredWidth() : 0;
+                int mainButtonX = expandLeft ? r - l - mMainButton.getMeasuredWidth() : 0;
                 // Ensure mAddButton is centered on the line where the buttons should be
                 int addButtonTop = b - t - mMaxButtonHeight + (mMaxButtonHeight - mMainButton.getMeasuredHeight()) / 2;
-                mMainButton.layout(addButtonX, addButtonTop, addButtonX + mMainButton.getMeasuredWidth(),
+                mMainButton.layout(mainButtonX, addButtonTop, mainButtonX + mMainButton.getMeasuredWidth(),
                         addButtonTop + mMainButton.getMeasuredHeight());
 
                 int nextX = expandLeft ?
-                        addButtonX - mButtonSpacing :
-                        addButtonX + mMainButton.getMeasuredWidth() + mButtonSpacing;
+                        mainButtonX - mButtonSpacing :
+                        mainButtonX + mMainButton.getMeasuredWidth() + mButtonSpacing;
 
                 for (int i = mButtonsCount - 1; i >= 0; i--) {
                     final View child = getChildAt(i);
@@ -335,7 +353,7 @@ public class FloatingActionsMenu extends ViewGroup {
                     int childY = addButtonTop + (mMainButton.getMeasuredHeight() - child.getMeasuredHeight()) / 2;
                     child.layout(childX, childY, childX + child.getMeasuredWidth(), childY + child.getMeasuredHeight());
 
-                    float collapsedTranslation = addButtonX - childX;
+                    float collapsedTranslation = mainButtonX - childX;
                     float expandedTranslation = 0f;
 
                     child.setTranslationX(mExpanded ? expandedTranslation : collapsedTranslation);
@@ -442,10 +460,6 @@ public class FloatingActionsMenu extends ViewGroup {
             mCollapseAnimation.start();
             mExpandAnimation.cancel();
 
-            if (mShowOverlay && mToolbar != null) {
-                mToolbar.setBackgroundColor(mDefaultToolbarColor);
-            }
-
             mCollapseAnimation.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
@@ -467,11 +481,6 @@ public class FloatingActionsMenu extends ViewGroup {
             mTouchDelegateGroup.setEnabled(true);
             mCollapseAnimation.cancel();
             mExpandAnimation.start();
-
-            if (mShowOverlay && mToolbar != null) {
-                int overlayColor = getColor(R.color.overlay_color);
-                mToolbar.setBackgroundColor(overlayColor);
-            }
 
             mExpandAnimation.addListener(new AnimatorListenerAdapter() {
                 @Override
@@ -506,6 +515,7 @@ public class FloatingActionsMenu extends ViewGroup {
         mExpandedMainButtonIcon = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_expandedMainButtonIcon, mMainButtonIcon);
         mMainButtonColorNormal = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorNormal, getColor(android.R.color.holo_blue_dark));
         mMainButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorPressed, ColorUtils.darkenColor(mMainButtonColorNormal));
+        mMainButtonTitle = attr.getString(R.styleable.FloatingActionsMenu_fab_mainButtonTitle);
         mMainButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_mainButtonSize, FloatingActionButton.SIZE_NORMAL);
         mMainButtonStrokeVisible = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_mainButtonStrokeVisible, true);
         mShowOverlay = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_showOverlay, false);
@@ -552,17 +562,16 @@ public class FloatingActionsMenu extends ViewGroup {
 
     private void createLabels() {
         Context context = new ContextThemeWrapper(getContext(), mLabelsStyle);
-
         for (int i = 0; i < mButtonsCount; i++) {
             FloatingActionButton button = (FloatingActionButton) getChildAt(i);
-            String title = button.getTitle();
+            int id = button.getId();
+            String title = (id == R.id.fab_expand_menu_button) ? mMainButtonTitle : button.getTitle();
 
-            if (button == mMainButton || title == null ||
-                    button.getTag(R.id.fab_label) != null) continue;
+            if (title == null || button.getTag(R.id.fab_label) != null) continue;
 
             TextView label = new TextView(context);
             label.setTextAppearance(getContext(), mLabelsStyle);
-            label.setText(button.getTitle());
+            label.setText(title);
             addView(label);
 
             button.setTag(R.id.fab_label, label);
