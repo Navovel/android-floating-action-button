@@ -50,7 +50,6 @@ public class FloatingActionsMenu extends ViewGroup {
     private int mMainButtonIcon;
     @DrawableRes
     private int mExpandedMainButtonIcon;
-    private String mMainButtonTitle;
     private int mMainButtonColorNormal;
     private int mMainButtonColorPressed;
     private int mMainButtonSize;
@@ -377,6 +376,10 @@ public class FloatingActionsMenu extends ViewGroup {
         return mShowOverlay;
     }
 
+    public void setMainButtonTitle(String title) {
+        mMainButton.setTitle(title);
+    }
+
     public void collapse() {
         if (mExpanded) {
             mExpanded = false;
@@ -440,15 +443,15 @@ public class FloatingActionsMenu extends ViewGroup {
         mExpandedMainButtonIcon = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_expandedMainButtonIcon, mMainButtonIcon);
         mMainButtonColorNormal = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorNormal, getColor(android.R.color.holo_blue_dark));
         mMainButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorPressed, ColorUtils.darkenColor(mMainButtonColorNormal));
-        mMainButtonTitle = attr.getString(R.styleable.FloatingActionsMenu_fab_mainButtonTitle);
         mMainButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_mainButtonSize, FloatingActionButton.SIZE_NORMAL);
         mShowOverlay = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_showOverlay, false);
         mExpandDirection = attr.getInt(R.styleable.FloatingActionsMenu_fab_expandDirection, EXPAND_UP);
         mLabelsStyle = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_labelStyle, R.style.default_labels_style);
         mLabelsPosition = attr.getInt(R.styleable.FloatingActionsMenu_fab_labelsPosition, LABELS_ON_LEFT_SIDE);
+        String mainButtonTitle = attr.getString(R.styleable.FloatingActionsMenu_fab_mainButtonTitle);
         attr.recycle();
 
-        createMainButtonButton(context);
+        createMainButtonButton(context, mainButtonTitle);
     }
 
     private void handleMainButtonClick() {
@@ -457,9 +460,10 @@ public class FloatingActionsMenu extends ViewGroup {
         } else expand();
     }
 
-    private void createMainButtonButton(Context context) {
+    private void createMainButtonButton(Context context, String title) {
         mMainButton = new FloatingActionButton(context);
         mMainButton.setId(R.id.fab_expand_menu_button);
+        mMainButton.setTitle(title);
         mMainButton.setIcon(mMainButtonIcon);
         mMainButton.setSize(mMainButtonSize);
         mMainButton.setColorNormal(mMainButtonColorNormal);
@@ -480,8 +484,7 @@ public class FloatingActionsMenu extends ViewGroup {
         Context context = new ContextThemeWrapper(getContext(), mLabelsStyle);
         for (int i = 0; i < mButtonsCount; i++) {
             FloatingActionButton button = (FloatingActionButton) getChildAt(i);
-            int id = button.getId();
-            String title = (id == R.id.fab_expand_menu_button) ? mMainButtonTitle : button.getTitle();
+            String title = button.getTitle();
 
             if (title == null || button.getTag(R.id.fab_label) != null) continue;
 
