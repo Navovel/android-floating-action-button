@@ -200,26 +200,28 @@ public class FloatingActionsMenu extends ViewGroup {
 
         // Add label for the main menu button
         View mainBtnLabel = (View) mMainButton.getTag(R.id.fab_label);
-        int mbLabelXAwayFromButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
-                ? labelsXNearButton - mainBtnLabel.getMeasuredWidth()
-                : labelsXNearButton + mainBtnLabel.getMeasuredWidth();
-        int mbLabelLeft = mLabelsPosition == LABELS_ON_LEFT_SIDE
-                ? mbLabelXAwayFromButton
-                : labelsXNearButton;
-        int mbLabelRight = mLabelsPosition == LABELS_ON_LEFT_SIDE
-                ? labelsXNearButton
-                : mbLabelXAwayFromButton;
-        int mbLabelTop = mainButtonY - mLabelsVerticalOffset
-                + (mMainButton.getMeasuredHeight() - mainBtnLabel.getMeasuredHeight()) / 2;
-        mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
-        mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
+        if (mainBtnLabel != null) {
+            int mbLabelXAwayFromButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                    ? labelsXNearButton - mainBtnLabel.getMeasuredWidth()
+                    : labelsXNearButton + mainBtnLabel.getMeasuredWidth();
+            int mbLabelLeft = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                    ? mbLabelXAwayFromButton
+                    : labelsXNearButton;
+            int mbLabelRight = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                    ? labelsXNearButton
+                    : mbLabelXAwayFromButton;
+            int mbLabelTop = mainButtonY - mLabelsVerticalOffset
+                    + (mMainButton.getMeasuredHeight() - mainBtnLabel.getMeasuredHeight()) / 2;
+            mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
+            mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
 
-        mTouchAreaRect = new Rect(
-                Math.min(mainButtonLeft, mbLabelLeft),
-                mainButtonY - mButtonSpacing / 2,
-                Math.max(mainButtonLeft + mMainButton.getMeasuredWidth(), mbLabelRight),
-                mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing / 2);
-        mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mTouchAreaRect, mMainButton));
+            mTouchAreaRect = new Rect(
+                    Math.min(mainButtonLeft, mbLabelLeft),
+                    mainButtonY - mButtonSpacing / 2,
+                    Math.max(mainButtonLeft + mMainButton.getMeasuredWidth(), mbLabelRight),
+                    mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing / 2);
+            mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mTouchAreaRect, mMainButton));
+        }
 
         for (int i = mButtonsCount - 1; i >= 0; i--) {
             final View child = getChildAt(i);
@@ -501,6 +503,7 @@ public class FloatingActionsMenu extends ViewGroup {
     }
 
     private static class SavedState extends BaseSavedState {
+
         public boolean mExpanded;
 
         public SavedState(Parcelable parcel) {
