@@ -197,31 +197,6 @@ public class FloatingActionsMenu extends ViewGroup {
                 mainButtonY - mButtonSpacing :
                 mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing;
 
-        // Add label for the main menu button
-        View mainBtnLabel = (View) mMainButton.getTag(R.id.fab_label);
-        if (mainBtnLabel != null) {
-            int mbLabelXAwayFromButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
-                    ? labelsXNearButton - mainBtnLabel.getMeasuredWidth()
-                    : labelsXNearButton + mainBtnLabel.getMeasuredWidth();
-            int mbLabelLeft = mLabelsPosition == LABELS_ON_LEFT_SIDE
-                    ? mbLabelXAwayFromButton
-                    : labelsXNearButton;
-            int mbLabelRight = mLabelsPosition == LABELS_ON_LEFT_SIDE
-                    ? labelsXNearButton
-                    : mbLabelXAwayFromButton;
-            int mbLabelTop = mainButtonY - mLabelsVerticalOffset
-                    + (mMainButton.getMeasuredHeight() - mainBtnLabel.getMeasuredHeight()) / 2;
-            mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
-            mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
-
-            mTouchAreaRect = new Rect(
-                    Math.min(mainButtonLeft, mbLabelLeft),
-                    mainButtonY - mButtonSpacing / 2,
-                    Math.max(mainButtonLeft + mMainButton.getMeasuredWidth(), mbLabelRight),
-                    mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing / 2);
-            mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mTouchAreaRect, mMainButton));
-        }
-
         for (int i = mButtonsCount - 1; i >= 0; i--) {
             final View child = getChildAt(i);
 
@@ -282,19 +257,44 @@ public class FloatingActionsMenu extends ViewGroup {
                     childY + child.getMeasuredHeight() + mButtonSpacing;
         }
 
-        ObjectAnimator expandAnimator = ObjectAnimator.ofFloat(mainBtnLabel, "alpha", 0f, 1f);
-        expandAnimator.setInterpolator(sAlphaExpandInterpolator);
-        ArrayList<Animator> list1 = mExpandAnimation.getChildAnimations();
-        list1.add(expandAnimator);
-        mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
-        mExpandAnimation.playTogether(list1);
+        // Add label for the main menu button
+        View mainBtnLabel = (View) mMainButton.getTag(R.id.fab_label);
+        if (mainBtnLabel != null) {
+            int mbLabelXAwayFromButton = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                    ? labelsXNearButton - mainBtnLabel.getMeasuredWidth()
+                    : labelsXNearButton + mainBtnLabel.getMeasuredWidth();
+            int mbLabelLeft = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                    ? mbLabelXAwayFromButton
+                    : labelsXNearButton;
+            int mbLabelRight = mLabelsPosition == LABELS_ON_LEFT_SIDE
+                    ? labelsXNearButton
+                    : mbLabelXAwayFromButton;
+            int mbLabelTop = mainButtonY - mLabelsVerticalOffset
+                    + (mMainButton.getMeasuredHeight() - mainBtnLabel.getMeasuredHeight()) / 2;
+            mainBtnLabel.layout(mbLabelLeft, mbLabelTop, mbLabelRight, mbLabelTop + mainBtnLabel.getMeasuredHeight());
+            mainBtnLabel.setAlpha(mExpanded ? 1f : 0f);
 
-        ObjectAnimator collapseAnimator = ObjectAnimator.ofFloat(mainBtnLabel, "alpha", 1f, 0f);
-        collapseAnimator.setInterpolator(sAlphaExpandInterpolator);
-        ArrayList<Animator> list2 = mCollapseAnimation.getChildAnimations();
-        list2.add(collapseAnimator);
-        mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
-        mCollapseAnimation.playTogether(list2);
+            mTouchAreaRect = new Rect(
+                    Math.min(mainButtonLeft, mbLabelLeft),
+                    mainButtonY - mButtonSpacing / 2,
+                    Math.max(mainButtonLeft + mMainButton.getMeasuredWidth(), mbLabelRight),
+                    mainButtonY + mMainButton.getMeasuredHeight() + mButtonSpacing / 2);
+            mTouchDelegateGroup.addTouchDelegate(new TouchDelegate(mTouchAreaRect, mMainButton));
+
+            ObjectAnimator expandAnimator = ObjectAnimator.ofFloat(mainBtnLabel, "alpha", 0f, 1f);
+            expandAnimator.setInterpolator(sAlphaExpandInterpolator);
+            ArrayList<Animator> list1 = mExpandAnimation.getChildAnimations();
+            list1.add(expandAnimator);
+            mExpandAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
+            mExpandAnimation.playTogether(list1);
+
+            ObjectAnimator collapseAnimator = ObjectAnimator.ofFloat(mainBtnLabel, "alpha", 1f, 0f);
+            collapseAnimator.setInterpolator(sAlphaExpandInterpolator);
+            ArrayList<Animator> list2 = mCollapseAnimation.getChildAnimations();
+            list2.add(collapseAnimator);
+            mCollapseAnimation = new AnimatorSet().setDuration(ANIMATION_DURATION);
+            mCollapseAnimation.playTogether(list2);
+        }
     }
 
     @Override
