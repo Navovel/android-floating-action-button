@@ -1,7 +1,6 @@
 package com.getbase.floatingactionbutton;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -426,45 +425,41 @@ public class FloatingActionsMenu extends ViewGroup {
 
     public void collapse() {
         if (mExpanded) {
-            mExpanded = false;
-            if (mShowOverlay && mOverlayView != null) mOverlayView.setVisibility(View.INVISIBLE);
-            mTouchDelegateGroup.setEnabled(false);
-            mCollapseAnimation.start();
-            mExpandAnimation.cancel();
-
-            mCollapseAnimation.addListener(new AnimatorListenerAdapter() {
+            mMainButton.setIcon(mMainButtonIcon);
+            post(new Runnable() {
                 @Override
-                public void onAnimationEnd(Animator animation) {
-                    super.onAnimationEnd(animation);
-                    mMainButton.setIcon(mMainButtonIcon);
+                public void run() {
+                    mExpanded = false;
+                    if (mShowOverlay && mOverlayView != null) mOverlayView.setVisibility(View.INVISIBLE);
+                    mTouchDelegateGroup.setEnabled(false);
+                    mCollapseAnimation.start();
+                    mExpandAnimation.cancel();
+
+                    if (mMenuUpdateListener != null) {
+                        mMenuUpdateListener.onMenuCollapsed();
+                    }
                 }
             });
-
-            if (mMenuUpdateListener != null) {
-                mMenuUpdateListener.onMenuCollapsed();
-            }
         }
     }
 
     public void expand() {
         if (!mExpanded) {
-            mExpanded = true;
-            if (mShowOverlay && mOverlayView != null) mOverlayView.setVisibility(View.VISIBLE);
-            mTouchDelegateGroup.setEnabled(true);
-            mCollapseAnimation.cancel();
-            mExpandAnimation.start();
-
-            mExpandAnimation.addListener(new AnimatorListenerAdapter() {
+            mMainButton.setIcon(mExpandedMainButtonIcon);
+            post(new Runnable() {
                 @Override
-                public void onAnimationEnd(Animator animation) {
-                    super.onAnimationEnd(animation);
-                    mMainButton.setIcon(mExpandedMainButtonIcon);
+                public void run() {
+                    mExpanded = true;
+                    if (mShowOverlay && mOverlayView != null) mOverlayView.setVisibility(View.VISIBLE);
+                    mTouchDelegateGroup.setEnabled(true);
+                    mCollapseAnimation.cancel();
+                    mExpandAnimation.start();
+
+                    if (mMenuUpdateListener != null) {
+                        mMenuUpdateListener.onMenuExpanded();
+                    }
                 }
             });
-
-            if (mMenuUpdateListener != null) {
-                mMenuUpdateListener.onMenuExpanded();
-            }
         }
     }
 
@@ -473,7 +468,7 @@ public class FloatingActionsMenu extends ViewGroup {
     }
 
     private void init(Context context, AttributeSet attributeSet) {
-        mLabelTypeface = Typeface.createFromAsset(getContext().getAssets(),"fonts/roboto_medium.ttf");
+        mLabelTypeface = Typeface.createFromAsset(getContext().getAssets(), "fonts/roboto_medium.ttf");
         mButtonSpacing = (int) (getResources().getDimension(R.dimen.fab_actions_spacing)
                 - getResources().getDimension(R.dimen.fab_shadow_radius)
                 - getResources().getDimension(R.dimen.fab_shadow_offset));
@@ -519,7 +514,6 @@ public class FloatingActionsMenu extends ViewGroup {
     private int getColor(@ColorRes int id) {
         return getResources().getColor(id);
     }
-
 
     private int adjustForOvershoot(int dimension) {
         return dimension * 12 / 10;
