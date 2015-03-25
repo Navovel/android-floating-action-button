@@ -138,7 +138,7 @@ public class FloatingActionsMenu extends ViewGroup {
             mOverlayView = new View(getContext());
             mOverlayView.setId(OVERLAY_VIEW_ID);
             mOverlayView.setLayoutParams(lp);
-            mOverlayView.setBackgroundColor(getColor(R.color.overlay_color));
+            mOverlayView.setBackgroundColor(getColor(R.color.fab_overlay_color));
             mOverlayView.setVisibility(mExpanded ? View.VISIBLE : View.INVISIBLE);
             mOverlayView.setOnClickListener(new OuterAreaClickListener());
             parentViewGroup.addView(mOverlayView);
