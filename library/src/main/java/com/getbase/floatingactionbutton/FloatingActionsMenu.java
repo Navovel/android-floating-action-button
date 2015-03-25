@@ -473,7 +473,6 @@ public class FloatingActionsMenu extends ViewGroup {
     }
 
     private void init(Context context, AttributeSet attributeSet) {
-        mLabelTypeface = Typeface.createFromAsset(getContext().getAssets(),"fonts/roboto_medium.ttf");
         mButtonSpacing = (int) (getResources().getDimension(R.dimen.fab_actions_spacing)
                 - getResources().getDimension(R.dimen.fab_shadow_radius)
                 - getResources().getDimension(R.dimen.fab_shadow_offset));
@@ -497,6 +496,8 @@ public class FloatingActionsMenu extends ViewGroup {
         attr.recycle();
 
         createMainButtonButton(context, mainButtonTitle);
+        if (!isInEditMode())
+            mLabelTypeface = Typeface.createFromAsset(getContext().getAssets(), "fonts/roboto_medium.ttf");
     }
 
     private void handleMainButtonClick() {
