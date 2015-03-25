@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -48,6 +49,8 @@ public class FloatingActionsMenu extends ViewGroup {
     private FloatingActionButton mMainButton;
     @Nullable
     private View mOverlayView;
+
+    private Typeface mLabelTypeface;
 
     @DrawableRes
     private int mMainButtonIcon;
@@ -470,6 +473,7 @@ public class FloatingActionsMenu extends ViewGroup {
     }
 
     private void init(Context context, AttributeSet attributeSet) {
+        mLabelTypeface = Typeface.createFromAsset(getContext().getAssets(),"fonts/roboto_medium.ttf");
         mButtonSpacing = (int) (getResources().getDimension(R.dimen.fab_actions_spacing)
                 - getResources().getDimension(R.dimen.fab_shadow_radius)
                 - getResources().getDimension(R.dimen.fab_shadow_offset));
@@ -485,7 +489,7 @@ public class FloatingActionsMenu extends ViewGroup {
         mMainButtonColorNormal = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorNormal, getColor(android.R.color.holo_blue_dark));
         mMainButtonColorPressed = attr.getColor(R.styleable.FloatingActionsMenu_fab_mainButtonColorPressed, ColorUtils.darkenColor(mMainButtonColorNormal));
         mMainButtonSize = attr.getInt(R.styleable.FloatingActionsMenu_fab_mainButtonSize, FloatingActionButton.SIZE_NORMAL);
-        mShowOverlay = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_showOverlay, false);
+        mShowOverlay = attr.getBoolean(R.styleable.FloatingActionsMenu_fab_showOverlay, true);
         mExpandDirection = attr.getInt(R.styleable.FloatingActionsMenu_fab_expandDirection, EXPAND_UP);
         mLabelsStyle = attr.getResourceId(R.styleable.FloatingActionsMenu_fab_labelStyle, R.style.default_labels_style);
         mLabelsPosition = attr.getInt(R.styleable.FloatingActionsMenu_fab_labelsPosition, LABELS_ON_LEFT_SIDE);
@@ -532,6 +536,7 @@ public class FloatingActionsMenu extends ViewGroup {
             TextView label = new TextView(context);
             label.setTextAppearance(getContext(), mLabelsStyle);
             label.setText(title);
+            label.setTypeface(mLabelTypeface);
             addView(label);
 
             button.setTag(R.id.fab_label, label);
