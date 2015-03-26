@@ -142,7 +142,7 @@ public class FloatingActionsMenu extends ViewGroup {
             mOverlayView.setVisibility(mExpanded ? View.VISIBLE : View.INVISIBLE);
             mOverlayView.setOnClickListener(new OuterAreaClickListener());
             parentViewGroup.addView(mOverlayView);
-            bringToFront();
+            parentViewGroup.bringChildToFront(this);
         }
     }
 
